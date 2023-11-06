@@ -44,24 +44,26 @@ const client = createClient(
   { auth }
 );
 
-const embeddingPromises = langchainDocs[0].map((doc) => {
-  return generateEmbedding(doc.pageContent);
-});
-
-const returnedEmbeddings = await Promise.all(embeddingPromises);
-
-let insertData = [];
-langchainDocs[0].map((doc, index) => {
-  insertData.push({
-    content: doc.pageContent,
-    embedding: returnedEmbeddings[index],
-    metadata: doc.metadata,
+for (let i = 0; i < langchainDocs.length; i++) {
+  console.log(langchainDocs[i][0].metadata.fileName);
+  let embeddingPromises = langchainDocs[i].map((doc) => {
+    return generateEmbedding(doc.pageContent);
   });
-});
-console.log("insertData", insertData);
+  
+  let returnedEmbeddings = await Promise.all(embeddingPromises);
 
-const { error } = await client.from("documents").insert(insertData);
-console.debug(error);
+  let insertData = [];
+  langchainDocs[i].map((doc, index) => {
+    insertData.push({
+      content: doc.pageContent,
+      embedding: returnedEmbeddings[index],
+      metadata: doc.metadata,
+    });
+  });
+  let { error } = await client.from("documents").insert(insertData);
+  console.debug(error);
+}
+
 
 export async function generateEmbedding(content) {
   const generateEmbedding = await pipeline(
